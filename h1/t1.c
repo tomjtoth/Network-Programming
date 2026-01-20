@@ -18,7 +18,7 @@ int main(int argc, char *argv[], char *envp[])
 
    // declare vars of same type
    pid_t pid, ppid, pgid;
-   uid_t uid;
+   long diff_sys, diff_env;
    struct timeval t1, t2;
 
    gettimeofday(&t1, NULL);
@@ -27,10 +27,10 @@ int main(int argc, char *argv[], char *envp[])
    pid = getpid();
    ppid = getppid();
    pgid = getpgrp();
-   uid = getuid();
+   uid_t uid = getuid();
 
    gettimeofday(&t2, NULL);
-   long syscall_time = elapsed_time(t1, t2);
+   diff_sys = elapsed_time(t1, t2);
 
    printf("Process info:\n");
    printf("  PID  = %d\n", pid);
@@ -48,11 +48,11 @@ int main(int argc, char *argv[], char *envp[])
    }
 
    gettimeofday(&t2, NULL);
-   long env_print_time = elapsed_time(t1, t2);
+   diff_env = elapsed_time(t1, t2);
 
    printf("\nTimes [microseconds] it took to:\n");
-   printf("   make syscalls: %ld\n", syscall_time);
-   printf("  print env vars: %ld\n", env_print_time);
+   printf("   make syscalls: %ld\n", diff_sys);
+   printf("  print env vars: %ld\n", diff_env);
 
    return 0;
 }
