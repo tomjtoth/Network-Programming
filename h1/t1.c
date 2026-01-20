@@ -23,7 +23,7 @@ int main(int argc, char *argv[], char *envp[])
 
    pid = getpid();
    ppid = getppid();
-   pgid = getpgid(0);
+   pgid = getpgrp();
    uid = getuid();
 
    gettimeofday(&t2, NULL);
