@@ -1,5 +1,3 @@
-
-
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -43,7 +41,7 @@ int main(int argc, char *argv[])
     fd = open(argv[1], O_RDONLY);
     if (fd < 0)
     {
-        perror("open");
+        fprintf(stderr, "  Failed to open '%s'.\n", argv[1]);
         return 1;
     }
 
@@ -60,7 +58,7 @@ int main(int argc, char *argv[])
 
     if (n < 0)
     {
-        perror("read");
+        fprintf(stderr, "  Failed to read line\n");
     }
 
     close(fd);

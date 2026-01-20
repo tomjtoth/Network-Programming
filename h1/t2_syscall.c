@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 
     if (n < 0)
     {
-        perror("read");
+        fprintf(stderr, "  Failed to read line\n");
     }
 
     if (fd != STDIN_FILENO)
