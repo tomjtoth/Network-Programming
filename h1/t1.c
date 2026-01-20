@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/time.h>
 
 int main(int argc, char *argv[], char *envp[])
 {
@@ -10,11 +11,18 @@ int main(int argc, char *argv[], char *envp[])
 
    pid_t pid, ppid, pgid;
    uid_t uid;
+   struct timeval t1, t2;
+
+   gettimeofday(&t1, NULL);
 
    pid = getpid();
    ppid = getppid();
    pgid = getpgid(0);
    uid = getuid();
+
+   gettimeofday(&t2, NULL);
+   long syscall_time = (t2.tv_sec - t1.tv_sec) * 1000000L +
+                       (t2.tv_usec - t1.tv_usec);
 
    printf("Process info:\n");
    printf("  PID  = %d\n", pid);
@@ -22,11 +30,21 @@ int main(int argc, char *argv[], char *envp[])
    printf("  PGID = %d\n", pgid);
    printf("  UID  = %d\n\n", uid);
 
+   gettimeofday(&t1, NULL);
+
    printf("Environment variables:\n");
    for (char **env = envp; *env != NULL; env++)
    {
       printf("%s\n", *env);
    }
+
+   gettimeofday(&t2, NULL);
+   long env_print_time = (t2.tv_sec - t1.tv_sec) * 1000000L +
+                         (t2.tv_usec - t1.tv_usec);
+
+   printf("\nTimes [microseconds] it took to:\n");
+   printf("   make syscalls: %ld\n", syscall_time);
+   printf("  print env vars: %ld\n", env_print_time);
 
    return 0;
 }
