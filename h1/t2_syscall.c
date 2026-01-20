@@ -8,7 +8,7 @@ const int BUFSIZE = 1024;
 int main(int argc, char *argv[])
 {
     int fd, i, line_len = 0;
-    ssize_t n;
+    ssize_t n, w_ret_val;
     // declare elements of those 2 to be char
     char buf[BUFSIZE], line[BUFSIZE];
 
@@ -39,8 +39,11 @@ int main(int argc, char *argv[])
             if (buf[i] == '\n' || line_len == BUFSIZE)
             {
                 // if succeeded, print twice
-                write(STDOUT_FILENO, line, line_len);
-                write(STDOUT_FILENO, line, line_len);
+                w_ret_val = write(STDOUT_FILENO, line, line_len);
+                w_ret_val = write(STDOUT_FILENO, line, line_len);
+
+                // ignoring retval of write
+                (void)w_ret_val;
                 line_len = 0;
             }
         }
