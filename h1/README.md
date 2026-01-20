@@ -42,3 +42,29 @@ Flags:
 # t5b
 
 Skipped.
+
+# t6
+
+- all your processes that are currently running `ps -u $USER` or use `htop` and filter (shortcut _u_) to the username in question
+
+- `ps -C firefox -o pid,ppid,cmd` or use `htop` and filter (shortcut _F4_) to the program name
+
+- ```sh
+  # A) kill certain process (nicely)
+
+  kill PID
+
+  # forcefully
+
+  kill -9 PID
+
+  # B) kill all my processes running firefox
+
+  pkill -u "$USER" firefox
+
+  # dry-run the above
+  pgrep -u "$USER" firefox
+
+  # C) kill all my processes.
+  pkill -u "$USER"
+  ```
