@@ -47,9 +47,9 @@ int main(int argc, char *argv[])
     {
         write(STDOUT_FILENO, buf, n);
 
-#ifdef DEV
-        // sleep only when compiled with `-DDEV` flag
-        usleep(500000);
+#ifdef SLEEP
+        // sleep only when compiled with `-DSLEEP=500000` flag
+        usleep(SLEEP);
 #endif
     }
 
