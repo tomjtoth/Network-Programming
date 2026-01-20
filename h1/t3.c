@@ -15,8 +15,9 @@ void sigint_handler(int signo)
     (void)signo;
     const char msg[] = "\n\n\tSIGINT received, exiting...\n\n";
 
+    // both of the below are async-signal-safe
+    // as in https://man7.org/linux/man-pages/man7/signal-safety.7.html
     write(STDERR_FILENO, msg, sizeof(msg) - 1);
-    // async-signal-safe as in https://man7.org/linux/man-pages/man7/signal-safety.7.html
     _exit(1);
 }
 
