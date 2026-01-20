@@ -10,6 +10,8 @@
 // smaller BUFSIZE means more stops & sleeps during DEV
 #define BUFSIZE 256
 
+ssize_t ignored;
+
 void sigint_handler(int signo)
 {
     (void)signo;
@@ -17,7 +19,9 @@ void sigint_handler(int signo)
 
     // both of the below are async-signal-safe
     // as in https://man7.org/linux/man-pages/man7/signal-safety.7.html
-    write(STDERR_FILENO, msg, sizeof(msg) - 1);
+    ignored = write(STDERR_FILENO, msg, sizeof(msg) - 1);
+    (void)ignored;
+
     _exit(1);
 }
 
@@ -45,7 +49,8 @@ int main(int argc, char *argv[])
 
     while ((n = read(fd, buf, BUFSIZE)) > 0)
     {
-        write(STDOUT_FILENO, buf, n);
+        ignored = write(STDOUT_FILENO, buf, n);
+        (void)ignored;
 
 #ifdef SLEEP
         // sleep only when compiled with `-DSLEEP=500000` flag
