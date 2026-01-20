@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-int main(void)
+int main(int argc, char *argv[], char *envp[])
 {
 
    pid_t pid, ppid, pgid;
@@ -18,6 +18,12 @@ int main(void)
    printf("  PPID = %d\n", ppid);
    printf("  PGID = %d\n", pgid);
    printf("  UID  = %d\n\n", uid);
+
+   printf("Environment variables:\n");
+   for (char **env = envp; *env != NULL; env++)
+   {
+      printf("%s\n", *env);
+   }
 
    return 0;
 }
