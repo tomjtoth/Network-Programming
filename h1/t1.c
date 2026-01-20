@@ -12,15 +12,18 @@ long elapsed_time(struct timeval start, struct timeval end)
 int main(int argc, char *argv[], char *envp[])
 {
 
+   // silence warnings
    (void)argc;
    (void)argv;
 
+   // declare vars of same type
    pid_t pid, ppid, pgid;
    uid_t uid;
    struct timeval t1, t2;
 
    gettimeofday(&t1, NULL);
 
+   // get IDs
    pid = getpid();
    ppid = getppid();
    pgid = getpgrp();
@@ -38,6 +41,7 @@ int main(int argc, char *argv[], char *envp[])
    gettimeofday(&t1, NULL);
 
    printf("Environment variables:\n");
+   // printing each elemnt of th eNULL terminated envp array
    for (char **env = envp; *env != NULL; env++)
    {
       printf("%s\n", *env);
