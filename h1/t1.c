@@ -5,6 +5,9 @@
 int main(int argc, char *argv[], char *envp[])
 {
 
+   (void)argc;
+   (void)argv;
+
    pid_t pid, ppid, pgid;
    uid_t uid;
 
