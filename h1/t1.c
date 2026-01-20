@@ -3,6 +3,12 @@
 #include <sys/types.h>
 #include <sys/time.h>
 
+long elapsed_time(struct timeval start, struct timeval end)
+{
+   return (end.tv_sec - start.tv_sec) * 1000000L +
+          (end.tv_usec - start.tv_usec);
+}
+
 int main(int argc, char *argv[], char *envp[])
 {
 
@@ -21,8 +27,7 @@ int main(int argc, char *argv[], char *envp[])
    uid = getuid();
 
    gettimeofday(&t2, NULL);
-   long syscall_time = (t2.tv_sec - t1.tv_sec) * 1000000L +
-                       (t2.tv_usec - t1.tv_usec);
+   long syscall_time = elapsed_time(t1, t2);
 
    printf("Process info:\n");
    printf("  PID  = %d\n", pid);
@@ -39,8 +44,7 @@ int main(int argc, char *argv[], char *envp[])
    }
 
    gettimeofday(&t2, NULL);
-   long env_print_time = (t2.tv_sec - t1.tv_sec) * 1000000L +
-                         (t2.tv_usec - t1.tv_usec);
+   long env_print_time = elapsed_time(t1, t2);
 
    printf("\nTimes [microseconds] it took to:\n");
    printf("   make syscalls: %ld\n", syscall_time);
