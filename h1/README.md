@@ -47,7 +47,7 @@ Skipped.
 
 - all your processes that are currently running `ps -u $USER` or use `htop` and filter (shortcut _u_) to the username in question
 
-- `ps -C firefox -o pid,ppid,cmd` or use `htop` and filter (shortcut _F4_) to the program name
+- `ps -C firefox -f` or use `htop` and filter (shortcut _F4_) to the program name
 
 - ```sh
   # A) kill certain process (nicely)
