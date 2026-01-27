@@ -38,15 +38,14 @@ int main(int argc, char *argv[])
     }
 
     if (pid == 0)
-        // After the fork() the child process calls function
+        // child does its thing and exits with RC of binary passed in to path
         exit(do_child(path, arg));
 
-    // The parent process executes the for-loop...
+    // parent process prints loop
     for (i = 1; i <= 5; i++)
         printf(" i = %d \n", i);
 
-    // ...waits the child to terminate and
-    // finds out the exit status of the child process
+    // parent waits for child and retrieves its exit code
     int rc = waitpid(pid, &child_stat, WNOHANG);
     if (rc < 0)
     {
@@ -54,6 +53,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    // parent prints exit code description
     // https://linux.die.net/man/2/waitpid
     if (WIFEXITED(child_stat))
     {
