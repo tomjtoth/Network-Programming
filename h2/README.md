@@ -44,3 +44,13 @@ struct stat {
 # task 4
 
 **skipped**
+
+# task 6
+
+Compile both, then run `srv` first, it sets up the FIFOs, only run `cli` after that.
+Stopping them should happend in reverse order.
+
+```sh
+gcc -Wall -Wextra -O2 t6.c -o srv -DSERVER=1
+gcc -Wall -Wextra -O2 t6.c -o cli
+```
