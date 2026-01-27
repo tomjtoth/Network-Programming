@@ -49,7 +49,25 @@ int main(int argc, char *argv[])
     // finds out the exit status of the child process
     int rc = waitpid(pid, &child_stat, WNOHANG);
     if (rc < 0)
-        fprintf(stderr, "child exited with code %d", rc);
+    {
+        perror("waitpid failed");
+        exit(1);
+    }
+
+    // https://linux.die.net/man/2/waitpid
+    if (WIFEXITED(child_stat))
+    {
+        fprintf(
+            stdout,
+            "child exited with code %d\n",
+
+            // This macro should only be employed if WIFEXITED returned true
+            WEXITSTATUS(child_stat));
+    }
+    else
+    {
+        printf("Child errored out\n");
+    }
 
     exit(0);
 }
