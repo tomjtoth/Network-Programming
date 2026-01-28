@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 
 #define BUFSIZE 100
+
 #define FIFO_SRV "/tmp/fifo_srv"
 #define FIFO_CLI "/tmp/fifo_cli"
 
@@ -17,9 +18,6 @@
 #else
 #define FIFO_SRV_PERM O_WRONLY
 #define FIFO_CLI_PERM O_RDONLY
-
-#define SERVER 1
-
 #endif
 
 int main()
@@ -30,7 +28,7 @@ int main()
     mkfifo(FIFO_CLI, 0666);
 
     char *msg = "FIFOs created, launch client now.\n";
-    write(STDERR_FILENO, msg, strlen(msg));
+    write(STDOUT_FILENO, msg, strlen(msg));
 
 #endif
 
@@ -49,6 +47,7 @@ int main()
         exit(1);
     }
 
+    // both use these vars
     char buf[BUFSIZE];
     ssize_t n;
 
@@ -84,15 +83,6 @@ int main()
         exit(1);
     }
 
-    close(fd_srv);
-    close(fd_cli);
-
-    if (unlink(FIFO_SRV) < 0)
-        fprintf(stderr, "can't unlink %s", FIFO_SRV);
-
-    if (unlink(FIFO_CLI) < 0)
-        fprintf(stderr, "can't unlink %s", FIFO_CLI);
-
 #else
 
     // read 100 bytes at most from stdin
@@ -104,6 +94,18 @@ int main()
             perror("sending to server failed");
             exit(1);
         }
+
+        // read back the same amount & print
+        if ((n = read(fd_cli, buf, n)) > 0)
+        {
+            write(STDOUT_FILENO, buf, n);
+        }
+
+        else if (n < 0)
+        {
+            perror("read from server FIFO failed");
+            exit(1);
+        }
     }
 
     if (n < 0)
@@ -112,23 +114,19 @@ int main()
         exit(1);
     }
 
+#endif
+
+    // both close both FIFOs
     close(fd_srv);
-
-    while ((n = read(fd_cli, buf, sizeof(buf))) > 0)
-    {
-        write(STDOUT_FILENO, buf, n);
-    }
-
-    if (n < 0)
-    {
-        perror("read from server FIFO failed");
-        exit(1);
-    }
-
     close(fd_cli);
 
-    char *msg = "FIFOs closed, stop server.";
-    write(STDERR_FILENO, msg, strlen(msg));
+#ifdef SERVER
+
+    if (unlink(FIFO_SRV) < 0)
+        fprintf(stderr, "can't unlink %s", FIFO_SRV);
+
+    if (unlink(FIFO_CLI) < 0)
+        fprintf(stderr, "can't unlink %s", FIFO_CLI);
 
 #endif
 
