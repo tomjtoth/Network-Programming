@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 {
     if (argc != 4)
     {
-        fprintf(stderr, "Usage: %s <server-ip> <total-bytes> <bytes-per-write>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <server-ip-address> <total-bytes> <bytes-per-write>\n", argv[0]);
         exit(1);
     }
 
