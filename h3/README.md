@@ -11,6 +11,39 @@ done
 ./t1_doubler
 ```
 
+# t2
+
+```sh
+gcc -Wall -Wextra -DDISABLE_LOCKING=1 -o task2 shm_incr2.c lock_fcntl.c
+
+# running w/o lock
+$ ./task2 dummy_file 12
+parent: 0
+child: 0
+parent: 1
+child: 1
+parent: 2
+child: 2
+parent: 3
+child: 3
+parent: 4
+parent: 5
+child: 4
+parent: 6
+child: 5
+parent: 7
+child: 6
+parent: 8
+child: 7
+parent: 9
+child: 8
+parent: 10
+child: 9
+parent: 11
+child: 10
+child: 11
+```
+
 # t4
 
 ```sh
