@@ -55,13 +55,25 @@ int main(int argc, char **argv)
 		perror("fork failed");
 		exit(1);
 	}
+
+#ifdef DISABLE_LOCKING
+	int tmp;
+#endif
+
 	if (pid == 0)
 	{ /* child */
 		for (i = 0; i < nloop; i++)
 		{
+
+#ifdef DISABLE_LOCKING
+			printf("child: %d\n", tmp = *ptr);
+			usleep(1); /* try first without usleep() */
+			*ptr = ++tmp;
+#else
 			my_lock_wait();
 			printf("child: %d\n", (*ptr)++);
 			my_lock_release();
+#endif
 		}
 		exit(0);
 	}
@@ -69,9 +81,15 @@ int main(int argc, char **argv)
 	/* 4parent */
 	for (i = 0; i < nloop; i++)
 	{
+#ifdef DISABLE_LOCKING
+		printf("parent: %d\n", tmp = *ptr);
+		usleep(1); /* try first without usleep() */
+		*ptr = ++tmp;
+#else
 		my_lock_wait();
 		printf("parent: %d\n", (*ptr)++);
 		my_lock_release();
+#endif
 	}
 	exit(0);
 }
