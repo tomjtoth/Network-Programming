@@ -17,8 +17,13 @@ done
 for prog in t4_*.c; do
     gcc -Wall -Wextra -O2 $prog -o ${prog%.c}
 done
+```
 
-# launch in the below order:
-./t4_doubler
-./t4_reader
+# t5
+
+```sh
+for prog in t5_*.c; do
+    # used the -DDEWBUG=1 flag during dev
+    gcc -Wall -Wextra -O2 $prog -o ${prog%.c}
+done
 ```
