@@ -44,6 +44,8 @@ child: 10
 child: 11
 ```
 
+Did not leave enough time to debug 2.b thoroughly, but at least it compiles... :)
+
 # t4
 
 ```sh
