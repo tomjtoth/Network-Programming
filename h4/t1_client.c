@@ -20,10 +20,10 @@ int main(int argc, char *argv[])
 
     int fd_sock;
     struct sockaddr_in serv_addr;
-    char buf[BUFSIZE];
+    char buf[BUFSIZE], buf2[BUFSIZE * 2];
     ssize_t n;
 
-    fd_sock = socket(AF_INET, SOCK_STREAM, 0);
+    fd_sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd_sock < 0)
     {
         perror("creating socket failed");
@@ -40,22 +40,15 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    if (connect(fd_sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-    {
-        perror("faled to connect to server");
-        exit(1);
-    }
-
     while ((n = read(STDIN_FILENO, buf, sizeof(buf))) > 0)
     {
-        if (write(fd_sock, buf, n) != n)
-        {
-            perror("write to server failed");
-            exit(1);
-        }
-    }
+        sendto(fd_sock, buf, n, 0,
+               (struct sockaddr *)&serv_addr, sizeof(serv_addr));
 
-    shutdown(fd_sock, SHUT_WR);
+        /* receive duplicated line */
+        n = recvfrom(fd_sock, buf2, BUFSIZE * 2, 0, NULL, NULL);
+        write(STDOUT_FILENO, buf2, n);
+    }
 
     close(fd_sock);
     return 0;
