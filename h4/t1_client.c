@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
         sendto(fd_sock, buf, n, 0,
                (struct sockaddr *)&serv_addr, sizeof(serv_addr));
 
-        /* receive duplicated line */
+        // receive duplicated data, print to stdout
         n = recvfrom(fd_sock, buf2, BUFSIZE * 2, 0, NULL, NULL);
         write(STDOUT_FILENO, buf2, n);
     }

@@ -35,9 +35,12 @@ int main()
         exit(1);
     }
 
+    // iterate in main loop
     for (;;)
     {
         cli_len = sizeof(cli_addr);
+        // get n bytes from socket, store in buffer
+        // and store client address
         n = recvfrom(fd_sock, buf, BUFSIZE, 0,
                      (struct sockaddr *)&cli_addr, &cli_len);
 
@@ -48,6 +51,7 @@ int main()
         memcpy(buf2, buf, n);
         memcpy(buf2 + n, buf, n);
 
+        // send duplicated data back to client addr
         sendto(fd_sock, buf2, 2 * n, 0,
                (struct sockaddr *)&cli_addr, cli_len);
     }
