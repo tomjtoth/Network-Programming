@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     serv_addr.ai_family = AF_INET;
     serv_addr.ai_socktype = SOCK_STREAM;
 
-    // resolve server name to IP and store it in result
+    // resolve server name to IP addr and store it in result
     if (getaddrinfo(argv[1], NULL, &serv_addr, &res) != 0)
     {
         perror("getaddrinfo");
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
     (void)write(STDOUT_FILENO, msg, strlen(msg));
 
     // read at most BUFSIZE from STDIN
-    while (n = read(STDIN_FILENO, buf, BUFSIZE) > 0)
+    while ((n = read(STDIN_FILENO, buf, BUFSIZE)) > 0)
     {
         // lines within limit end with \n
         if (buf[n - 1] != '\n')
