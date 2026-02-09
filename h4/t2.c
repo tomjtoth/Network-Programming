@@ -24,6 +24,7 @@ int main(int argc, char *argv[])
     struct servent *echo_entry;
     char buf[BUFSIZE];
     ssize_t n;
+    char *msg;
 
     // get standard TCP port of echo service 7?
     echo_entry = getservbyname("echo", "tcp");
@@ -44,6 +45,9 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    msg = "  =>  resolved server addr\n";
+    (void)write(STDOUT_FILENO, msg, strlen(msg));
+
     // assign echo_entry.s_port to res.ai_addr.sin_port
     ((struct sockaddr_in *)res->ai_addr)->sin_port = echo_entry->s_port;
 
@@ -61,6 +65,9 @@ int main(int argc, char *argv[])
     }
 
     freeaddrinfo(res);
+
+    msg = "  =>  connected to server\n";
+    (void)write(STDOUT_FILENO, msg, strlen(msg));
 
     // read at most BUFSIZE from STDIN
     while (n = read(STDIN_FILENO, buf, BUFSIZE) > 0)
