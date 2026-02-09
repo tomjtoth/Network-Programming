@@ -1,5 +1,7 @@
 # t1
 
+Was unable to read from files properly :'(
+
 ```sh
 for prog in t1_*.c; do
     gcc -Wall -Wextra -O2 $prog -o ${prog%.c}
