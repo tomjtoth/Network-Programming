@@ -9,6 +9,16 @@
 #define BUFSIZE 100
 #define PORT 50000
 
+void debug(char *msg)
+{
+#ifdef DEBUG
+    char buf[strlen(msg) + 7];
+
+    int x = snprintf(buf, sizeof(buf), " ==> %s\n", msg);
+    write(STDOUT_FILENO, buf, x);
+#endif
+}
+
 void serve_client(int fd_conn)
 {
     char line[BUFSIZE];
@@ -16,27 +26,17 @@ void serve_client(int fd_conn)
     char c;
     ssize_t n;
 
-    while ((n = read(fd_conn, &c, 1)) > 0)
+    // reading saintized input (max BUFSIZE long, at once)
+    while ((n = read(fd_conn, line, BUFSIZE)) > 0)
     {
-        if (pos < BUFSIZE)
+        if (write(fd_conn, line, n) != n)
         {
-            line[pos] = c;
-        }
-        pos++;
-
-        if (c == '\n')
-        {
-            // discard longer, than 100chr lines
-            // else send it back twice
-            if (pos <= BUFSIZE)
-            {
-                write(STDOUT_FILENO, line, pos);
-                write(STDOUT_FILENO, line, pos);
-            }
-            pos = 0;
+            // wasn't able to echo back to client
+            break;
         }
     }
 
+    // cleanup child proc
     close(fd_conn);
     exit(0);
 }
@@ -45,6 +45,7 @@ int main(void)
 {
     int fd_listen, fd_conn;
     struct sockaddr_in serv_addr;
+    char *msg;
 
     fd_listen = socket(AF_INET, SOCK_STREAM, 0);
     if (fd_listen < 0)
@@ -66,6 +67,8 @@ int main(void)
 
     listen(fd_listen, 5);
 
+    debug("listening on port 50000");
+
     for (;;)
     {
         fd_conn = accept(fd_listen, NULL, NULL);
@@ -75,6 +78,8 @@ int main(void)
             // just move on, lol
             continue;
         }
+
+        debug("accepted connection");
 
         if (fork() == 0)
         {
