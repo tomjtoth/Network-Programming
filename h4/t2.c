@@ -11,6 +11,16 @@
 
 #define BUFSIZE 100
 
+void debug(char *msg)
+{
+#ifdef DEBUG
+    char buf[strlen(msg) + 7];
+
+    int x = snprintf(buf, sizeof(buf), " ==> %s\n", msg);
+    write(STDOUT_FILENO, buf, x);
+#endif
+}
+
 int main(int argc, char *argv[])
 {
     if (argc != 2)
@@ -45,8 +55,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    msg = "  =>  resolved server addr\n";
-    (void)write(STDOUT_FILENO, msg, strlen(msg));
+    debug("resolved server addr");
 
     // assign echo_entry.s_port to res.ai_addr.sin_port
     ((struct sockaddr_in *)res->ai_addr)->sin_port = echo_entry->s_port;
@@ -66,8 +75,7 @@ int main(int argc, char *argv[])
 
     freeaddrinfo(res);
 
-    msg = "  =>  connected to server\n";
-    (void)write(STDOUT_FILENO, msg, strlen(msg));
+    debug("connected to server");
 
     // read at most BUFSIZE from STDIN
     while ((n = read(STDIN_FILENO, buf, BUFSIZE)) > 0)
@@ -75,11 +83,16 @@ int main(int argc, char *argv[])
         // lines within limit end with \n
         if (buf[n - 1] != '\n')
         {
-            int c;
+            debug("last char was not LF");
+            char c;
             while (read(STDIN_FILENO, &c, 1) > 0 && c != '\n')
             {
+
+                debug("read 1 char");
                 // no-op, just read and discard everything up to LF
             };
+
+            debug("LF reached, skipping to next line");
 
             // read next line
             continue;
@@ -92,6 +105,8 @@ int main(int argc, char *argv[])
             exit(1);
         }
 
+        debug("msg sent");
+
         // receive echo
         if (read(sock, buf, n) != n)
         {
@@ -99,12 +114,16 @@ int main(int argc, char *argv[])
             exit(1);
         }
 
+        debug("echo arrived back");
+
         // print line
         if (write(STDOUT_FILENO, buf, n) != n)
         {
             perror("write to stdout");
             exit(1);
         }
+
+        debug("echo written to stdout");
     }
 
     close(sock);
