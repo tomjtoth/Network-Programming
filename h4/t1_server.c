@@ -55,4 +55,7 @@ int main()
         sendto(fd_sock, buf2, 2 * n, 0,
                (struct sockaddr *)&cli_addr, cli_len);
     }
+
+    close(fd_sock);
+    return 0;
 }
