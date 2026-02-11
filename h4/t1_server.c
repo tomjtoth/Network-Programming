@@ -21,7 +21,7 @@ int main()
     if (fd_sock < 0)
     {
         perror("socket");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     memset(&serv_addr, 0, sizeof(serv_addr));
@@ -57,5 +57,5 @@ int main()
     }
 
     close(fd_sock);
-    return 0;
+    return EXIT_SUCCESS;
 }

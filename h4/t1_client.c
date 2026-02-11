@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     if (argc != 2)
     {
         fprintf(stderr, "Usage: %s <server-ip-address>\n", argv[0]);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     int fd_sock;
@@ -64,5 +64,5 @@ int main(int argc, char *argv[])
     }
 
     close(fd_sock);
-    return 0;
+    return EXIT_SUCCESS;
 }

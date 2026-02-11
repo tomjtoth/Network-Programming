@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     if (argc != 2)
     {
         fprintf(stderr, "Usage: %s <server-domain-name>\n", argv[0]);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     int sock;
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     if (echo_entry == NULL)
     {
         fprintf(stderr, "getservbyname failed\n");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     memset(&serv_addr, 0, sizeof(serv_addr));
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     if (getaddrinfo(argv[1], NULL, &serv_addr, &res) != 0)
     {
         perror("getaddrinfo");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     debug("resolved server addr");
@@ -64,13 +64,13 @@ int main(int argc, char *argv[])
     if (sock < 0)
     {
         perror("socket");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     if (connect(sock, res->ai_addr, res->ai_addrlen) < 0)
     {
         perror("connect");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     freeaddrinfo(res);
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
         if (write(sock, buf, n) != n)
         {
             perror("write");
-            exit(1);
+            exit(EXIT_FAILURE);
         }
 
         debug("msg sent");
@@ -120,12 +120,12 @@ int main(int argc, char *argv[])
         if (write(STDOUT_FILENO, buf, n) != n)
         {
             perror("write to stdout");
-            exit(1);
+            exit(EXIT_FAILURE);
         }
 
         debug("echo written to stdout");
     }
 
     close(sock);
-    return 0;
+    return EXIT_SUCCESS;
 }
