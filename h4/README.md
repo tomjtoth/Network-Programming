@@ -16,3 +16,7 @@ The app will experience this as the call to `connect()` failing with `errno == E
 ![Lecture5-6/s108](lecture5-6slide108.png)
 ![UNIX Network Programming page 99](UNIX-Network-Programming-p99.png)
 ![UNIX Network Programming page 100](UNIX-Network-Programming-p100.png)
+
+# task 6
+
+basically skipped
