@@ -42,6 +42,19 @@ int main(int argc, char *argv[])
 
     while ((n = read(STDIN_FILENO, buf, sizeof(buf))) > 0)
     {
+        // lines within limit end with \n
+        if (buf[n - 1] != '\n')
+        {
+            char c;
+            while (read(STDIN_FILENO, &c, 1) > 0 && c != '\n')
+            {
+                // no-op, just read and discard everything up to LF
+            };
+
+            // read next line
+            continue;
+        }
+
         sendto(fd_sock, buf, n, 0,
                (struct sockaddr *)&serv_addr, sizeof(serv_addr));
 
