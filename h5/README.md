@@ -30,3 +30,46 @@ Changing the referenced variable's type to `socklen_t size;` solved the problem.
 tjtoth@np1:~/h5/unpv13e/intro$ ./daytimetcpcli 127.0.0.1
 17 FEB 2026 10:56:37 EET
 ```
+
+# task 2a
+
+- changing the PORT is necessary because the original port is already in use by the original service and only 1 app can bind to 1 port
+
+# task 5
+
+No changes were necessary to get the test app up and running.
+
+```sh
+tjtoth@np1:~/h5/unpv22e/lib$     cd ../pipe     # build and test a simple program
+tjtoth@np1:~/h5/unpv22e/pipe$     make pipeconf
+gcc -g -O2 -D_REENTRANT -Wall   -c -o pipeconf.o pipeconf.c
+gcc -g -O2 -D_REENTRANT -Wall -o pipeconf pipeconf.o ../libunpipc.a -lrt -lpthread
+/usr/bin/ld: ../libunpipc.a(wrapunix.o): in function `Mktemp':
+/home/tjtoth/h5/unpv22e/lib/wrapunix.c:184:(.text+0x409): warning: the use of `mktemp' is dangerous, better use `mkstemp' or `mkdtemp'
+tjtoth@np1:~/h5/unpv22e/pipe$     ./pipeconf /tmp
+PIPE_BUF = 4096, OPEN_MAX = 1024
+```
+
+# task 6
+
+The theoritical maximum for the UDP datagram is _65,535 bytes_,
+which includes the 20 bytes long IP header,
+and the 8 byte long UDP header,
+reducing the useful maximum payload to _65,507 bytes_.
+
+I took the [server](../h4/t1_server.c) from last week, trimmed it.
+Modified the [client](../h4/t1_client.c) to send incrementally larger sized data.
+Set both side's `BUFSIZE=65535` and added logging of sent/received size.
+
+```sh
+$ ./cli
+sent 0 bytes
+sent 1 bytes
+
+...
+
+sent 65507 bytes
+sendto failed: Message too long
+```
+
+The last successfully sent chunk was the same size as calculated above.
