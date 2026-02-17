@@ -31,9 +31,63 @@ tjtoth@np1:~/h5/unpv13e/intro$ ./daytimetcpcli 127.0.0.1
 17 FEB 2026 10:56:37 EET
 ```
 
-# task 2a
+# task 2
+
+I made use of the Makefile and renamed the appropriate files to `daytimetcp{srv,cli}.c` and ran `make` on the server.
+
+## part A
 
 - changing the PORT is necessary because the original port is already in use by the original service and only 1 app can bind to 1 port
+- also processes binding ports below 1024 would require to be run as root, and I'm not in sudoers...
+
+  ```sh
+  tjtoth@np1:~$ sudo cat
+  [sudo] password for tjtoth:
+  tjtoth is not in the sudoers file.
+  This incident has been reported to the administrator.
+  ```
+
+## part B
+
+I get the below error when starting up the server.
+
+```sh
+tjtoth@np1:~/h5/unpv13e/intro$ ./daytimetcpsrv1
+accept error: Invalid argument
+```
+
+The call to `listen()` transitions the port from CLOSED to LISTEN state on the server.
+`accept()` requires a port that's actually in LISTEN state.
+
+Regardless when the client calls `connect()`, it would receive an `RST` packet from the server, as the port is CLOSEd.
+
+## part C
+
+When the call to `bind` is skipped, but `listen` is called, we get an implicit bind to a random port, so the server is up and running, only not on `PORT=50000`, but at some random port the kernel assigned.
+
+The client receives `RST` as nothing is actually listening on `PORT=50000`.
+
+```sh
+tjtoth@np1:~/h5/unpv13e/intro$ ./daytimetcpcli 127.0.0.1
+connect error: Connection refused
+```
+
+## part D
+
+Redireceted the output of the server [to a file](./2d_server.log), and launched 3 instances of the client in parallel, each with 20,000 iterations via the below command:
+
+```sh
+for x in 1 1 1; do ./daytimetcpcli 127.0.0.1 20000; done
+```
+
+The logged port numbers lap over 32770 and 60990 ranges several times
+
+```sh
+36920 -> 60986
+32770 -> 60986
+32770 -> 60996
+32778 .....
+```
 
 # task 5
 
