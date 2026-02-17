@@ -89,6 +89,14 @@ The logged port numbers lap over 32770 and 60990 ranges several times
 32778 .....
 ```
 
+# task 3
+
+## part A
+
+No changes, the app remains functional.
+Client-side the app asks the kernel to discard any incoming data, nothing happens in TCP layer.
+Server-side a FIN packet is sent to the client, but the connection will remain alive until the client closes it.
+
 # task 5
 
 No changes were necessary to get the test app up and running.
