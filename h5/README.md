@@ -103,6 +103,10 @@ In addition to part A the server app tells the kernel to discard anything after 
 
 Client-side `write` will not return the number of bytes sent on the 3rd write attempt, because the server already closed the connection, `RST` is returned. Only then the client moves on to finishing closing connection (initiated by the server-side `shutdown(sock, SHUT_WR)` call) sendind `FIN+ACK`.
 
+# task 4 - SKIPPED
+
+This is exactly the same scenario as in 3b(?).
+
 # task 5
 
 No changes were necessary to get the test app up and running.
