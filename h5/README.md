@@ -95,7 +95,13 @@ The logged port numbers lap over 32770 and 60990 ranges several times
 
 No changes, the app remains functional.
 Client-side the app asks the kernel to discard any incoming data, nothing happens in TCP layer.
-Server-side a FIN packet is sent to the client, but the connection will remain alive until the client closes it.
+Server-side a FIN packet is sent to the client, but the connection will remain alive until the client closes it, and the client can still send data.
+
+## part B
+
+In addition to part A the server app tells the kernel to discard anything after the 1st `read`, the next call to `read` will return 0, and the server initiates closing `fd_sock` and waits for a new client to connect.
+
+Client-side `write` will not return the number of bytes sent on the 3rd write attempt, because the server already closed the connection, `RST` is returned. Only then the client moves on to finishing closing connection (initiated by the server-side `shutdown(sock, SHUT_WR)` call) sendind `FIN+ACK`.
 
 # task 5
 
