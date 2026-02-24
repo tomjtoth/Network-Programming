@@ -1,16 +1,25 @@
+#include <unistd.h>
 #include <stdlib.h>
 #include <syslog.h>
-#include <string.h>
 
-int main(void)
+int main()
 {
     openlog("h6t2", LOG_PID | LOG_CONS, LOG_USER);
 
-    syslog(LOG_INFO, "this is an info");
+    usleep(500000);
+    syslog(LOG_DEBUG, "LOG_DEBUG looks like this");
 
-    syslog(LOG_ERR, "this is a formatted error message: '%s'", "from parameter");
+    usleep(500000);
+    syslog(LOG_NOTICE, "LOG_NOTICE looks like this");
 
-    syslog(LOG_DEBUG, "this is debug info");
+    usleep(500000);
+    syslog(LOG_INFO, "LOG_INFO looks like this");
+
+    usleep(500000);
+    syslog(LOG_CRIT, "LOG_CRIT looks like this");
+
+    usleep(500000);
+    syslog(LOG_ERR, "LOG_ERR looks like this: '%s'", "with additional format");
 
     closelog();
 
