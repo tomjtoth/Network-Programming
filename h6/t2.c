@@ -21,6 +21,12 @@ int main()
     usleep(500000);
     syslog(LOG_ERR, "LOG_ERR looks like this: '%s'", "with additional format");
 
+    usleep(500000);
+    syslog(LOG_ALERT, "LOG_ALERT looks like this");
+
+    usleep(500000);
+    syslog(LOG_EMERG, "LOG_EMERG looks like this");
+
     closelog();
 
     return EXIT_SUCCESS;
