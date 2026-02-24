@@ -10,16 +10,19 @@ int main()
     syslog(LOG_DEBUG, "LOG_DEBUG looks like this");
 
     usleep(500000);
-    syslog(LOG_NOTICE, "LOG_NOTICE looks like this");
-
-    usleep(500000);
     syslog(LOG_INFO, "LOG_INFO looks like this");
 
     usleep(500000);
-    syslog(LOG_CRIT, "LOG_CRIT looks like this");
+    syslog(LOG_NOTICE, "LOG_NOTICE looks like this");
+
+    usleep(500000);
+    syslog(LOG_WARNING, "LOG_WARNING looks like this");
 
     usleep(500000);
     syslog(LOG_ERR, "LOG_ERR looks like this: '%s'", "with additional format");
+
+    usleep(500000);
+    syslog(LOG_CRIT, "LOG_CRIT looks like this");
 
     usleep(500000);
     syslog(LOG_ALERT, "LOG_ALERT looks like this");
