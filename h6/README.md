@@ -34,3 +34,28 @@ The command `journalctl -t h6t2 -f` follows the output of this [small app](./t2.
 From the [man page](https://man7.org/linux/man-pages/man3/syslog.3.html) we can see the whole list of priorities.
 
 # 6 Course feedback
+
+It was interesting to see how signal handling, spawning child processes and IPC work in C.
+
+The name of the course is misleading: "C programming" would describe it better.
+The workload is somewhat misaligned with other 5cr. courses
+(take the Haskell course for reference, which can be completed under a week)
+at the University of Helsinki and would greatly benefit from being moved to MOOC:
+
+- lecture slides (in PowerPoint form factor)
+  contain massive amounts of custom formatted source code
+  spanning several slides with the occasional syntax error
+
+- showing model solutions after submission of the weekly tasks online
+  would be more efficient, than having obligatory gatherings in Kumpula
+
+- modernize the material
+  - skip and remove function definitions,
+    that became standardized over the past 20+ years
+  - remove unnecessary casts
+    throughout the source code snippets in the lecture slides
+
+- abolish the **pen & paper "programming"** exam
+  - or provide cheatsheets on paper with the
+    docstrings and signatures of the required functions
+    (there is a reason why IDEs are wide-spread :)
