@@ -1,5 +1,6 @@
 #define _POSIX_C_SOURCE 200112L
 
+#include <ctype.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -46,7 +47,93 @@ ssize_t get(int sock, char *buf)
     return n;
 }
 
-void server(int port)
+int process_line(char buf[BUFSIZE], int *pos, int sock, char *filename)
+{
+
+    // debugging #320
+    if (buf[0] != '#')
+        printf("  => processing this line:\n");
+
+    // show me the line in any case
+    write(STDOUT_FILENO, buf, *pos);
+
+    // check 1st char on line
+    switch (toupper((unsigned char)buf[0]))
+    {
+    case 'E':
+
+        // convert line to lowercase char-by-char
+        for (int i = 0; i < *pos; i++)
+            buf[i] = tolower((unsigned char)buf[i]);
+
+        // debugging
+        printf("  => sending back the below line:\n");
+        write(STDOUT_FILENO, buf, *pos);
+
+        if (write(sock, buf, *pos) != *pos)
+        {
+            perror("failed to send echo back");
+            exit(EXIT_FAILURE);
+        }
+
+        break;
+
+    case 'C':
+        put(sock, filename);
+        break;
+
+        // case 'F':
+        //     break;
+
+        // case 'A':
+        //     break;
+
+    case 'Q':
+        printf("  => closing connection\n");
+        close(sock);
+        return 1;
+
+    // comments and unexpected inputs
+    default:
+        break;
+    }
+
+    // reset carriage in any case
+    *pos = 0;
+
+    return 0;
+}
+
+void serve_client(int sock, char *filename)
+{
+    ssize_t n;
+    char c;
+    int pos = 0;
+    char buf[BUFSIZE];
+
+    while ((n = read(sock, &c, 1)) > 0)
+    {
+        buf[pos++] = c;
+
+        // are we getting empty lines??
+        if (c == '\n' && pos > 1)
+        {
+            if (process_line(buf, &pos, sock, filename))
+                break;
+        }
+    }
+
+    if (n < 0)
+    {
+        perror("read from server");
+        exit(1);
+    }
+
+    printf("  => childproc %d exiting\n", getpid());
+    exit(0);
+}
+
+void server(int port, char *filename)
 {
     int fd_listen, fd_conn;
     struct sockaddr_in serv_addr;
@@ -86,12 +173,7 @@ void server(int port)
         {
             // child proc of server serves the connected client
             close(fd_listen);
-            get(fd_conn, buf);
-            get(fd_conn, buf);
-            get(fd_conn, buf);
-            get(fd_conn, buf);
-            get(fd_conn, buf);
-            get(fd_conn, buf);
+            serve_client(fd_conn, filename);
         }
 
         close(fd_conn);
@@ -157,14 +239,14 @@ int main(int argc, char *argv[])
     // retrieve PORT number from last message
     get(sock, buf);
 
-    // extracting
-    char str_port[6]; // substring with '\0' at the end
+    // extracting substring from pos 55..60 with '\0' at the end
+    char str_port[6];
     memcpy(str_port, buf + 55, 5);
-    str_port[6] = '\0';
+    str_port[5] = '\0';
     int port = atoi(str_port);
 
     printf("  => resolved port from msg: %d\n", port);
-    server(port);
+    server(port, argv[0]);
 
     // get leftover messages from server
     while (get(sock, buf))
