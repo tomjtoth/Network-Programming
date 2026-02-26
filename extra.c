@@ -11,6 +11,8 @@
 #include <netdb.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <signal.h>
+#include <sys/wait.h>
 
 #define BUFSIZE 1024
 
@@ -74,7 +76,9 @@ int conn_remote(uint16_t port)
 
     return sock;
 }
-
+/**
+ * send message to socket
+ */
 void put(int sock, char *msg)
 {
     size_t n, m;
@@ -94,6 +98,10 @@ void put(int sock, char *msg)
     printf("  => sent %ld bytes (%s)\n", m, msg);
 }
 
+/**
+ * read from socket into buffer (also output to stdout)
+ * returns read bytes
+ */
 ssize_t get(int sock, char *buf)
 {
     ssize_t n;
@@ -109,6 +117,9 @@ ssize_t get(int sock, char *buf)
     return n;
 }
 
+/**
+ * parse buf and return port from fixed position
+ */
 int extract_port(char buf[BUFSIZE], int pos)
 {
     int port = 0;
@@ -131,6 +142,9 @@ int extract_port(char buf[BUFSIZE], int pos)
     return port;
 }
 
+/**
+ * connect to remote at `port` and send contents of file pointed to by `fd`
+ */
 void send_file(int port, int fd)
 {
     char buf[BUFSIZE];
@@ -233,12 +247,10 @@ int process_line(char buf[BUFSIZE], int *pos, int sock)
         handle_F_line(buf, *pos, sock);
         break;
 
-        // case 'A':
-        //     break;
+    case 'A':
+        return 2;
 
     case 'Q':
-        printf("  => closing connection\n");
-        close(sock);
         return 1;
 
     // comments and unexpected inputs
@@ -258,27 +270,54 @@ void serve_client(int sock)
     char c;
     int pos = 0;
     char buf[BUFSIZE];
+    int res, accepted = 0;
 
     while ((n = read(sock, &c, 1)) > 0)
     {
         buf[pos++] = c;
 
-        // are we getting empty lines??
-        if (c == '\n' && pos > 1)
+        if (c == '\n')
         {
-            if (process_line(buf, &pos, sock))
-                break;
+            if (res = process_line(buf, &pos, sock))
+            {
+                // A lines return 2
+                if (res > 1)
+                    accepted = 1;
+
+                // but stopping on Q lines only
+                if (res == 1)
+                    break;
+            }
         }
     }
 
     if (n < 0)
     {
         perror("read from server");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
+    close(sock);
     printf("  => childproc %d exiting\n", getpid());
-    exit(0);
+
+    // exiting child process with my spec. exit code == 2 if accepted
+    exit(accepted == 1 ? 2 : EXIT_SUCCESS);
+}
+
+volatile sig_atomic_t stop_server = 0;
+void handle_sigchld(int sig)
+{
+    int status;
+    pid_t pid;
+
+    while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
+    {
+        // if child exited with my spec code 2, then concurrent server should be stopped
+        if (WIFEXITED(status) && WEXITSTATUS(status) == 2)
+        {
+            stop_server = 1;
+        }
+    }
 }
 
 void server(int port)
@@ -306,14 +345,24 @@ void server(int port)
 
     listen(fd_listen, 5);
 
+    // install sigchild handler in the main process
+    struct sigaction sa;
+    sa.sa_handler = handle_sigchld;
+    sigemptyset(&sa.sa_mask);
+
+    // disabling SA_RESTART
+    sa.sa_flags = 0;
+    sigaction(SIGCHLD, &sa, NULL);
+
     for (;;)
     {
-        char buf[BUFSIZE];
         fd_conn = accept(fd_listen, NULL, NULL);
         if (fd_conn < 0)
         {
-            // don't exit on failed connection of client,
-            // just move on, lol
+            if (stop_server == 1)
+                break;
+
+            // for other failures the server should just move on
             continue;
         }
 
@@ -324,8 +373,13 @@ void server(int port)
             serve_client(fd_conn);
         }
 
+        // parent closes connection on known-port
         close(fd_conn);
     }
+
+    // terminate my server
+    close(fd_listen);
+    printf("  => stopped concurrent server\n");
 }
 
 int main(int argc, char *argv[])
@@ -354,5 +408,7 @@ int main(int argc, char *argv[])
     };
 
     close(sock);
+
+    printf("  => fn main ends\n");
     return EXIT_SUCCESS;
 }
