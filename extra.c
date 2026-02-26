@@ -9,6 +9,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #define BUFSIZE 1024
 
@@ -43,13 +45,119 @@ ssize_t get(int sock, char *buf)
 
     write(STDOUT_FILENO, buf, n);
 
-    // I need this when extracting the port
     return n;
 }
 
-int process_line(char buf[BUFSIZE], int *pos, int sock, char *filename)
+int extract_port(char buf[BUFSIZE], int pos)
 {
+    int port = 0;
 
+    // parse by the digit without memcpy
+    for (int decimal = 10000; decimal >= 1; decimal /= 10)
+    {
+        int distance_from_zero = buf[pos] - '0';
+
+        printf("  => port = %05d + ('%c' - '0' == %d) * %d\n",
+               port, buf[pos], distance_from_zero, decimal);
+
+        port += distance_from_zero * decimal;
+        pos++;
+    }
+
+    // I'm using the same pos var for moving my carriage, so must adjust here
+    printf("  => resolved port from buf at pos %d: %d\n", pos - 5, port);
+
+    return port;
+}
+
+void send_file(int port, int fd)
+{
+    // get random socket
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0)
+    {
+        perror("creating socket failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // create address:port of receiver
+    struct sockaddr_in serv_addr;
+    memset(&serv_addr, 0, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    serv_addr.sin_port = htons(port);
+
+    // connect to receiver
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    {
+        perror("faled to connect to server");
+        exit(EXIT_FAILURE);
+    }
+
+    char buf[BUFSIZE];
+    ssize_t n;
+
+    // BUFSIZE chunks from file
+    while ((n = read(fd, buf, BUFSIZE)) > 0)
+    {
+        // and send to receiver
+        if (write(sock, buf, n) != n)
+        {
+            // abort on error
+            perror("failed to send file");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    // terminate connection to receiver
+    close(sock);
+}
+
+void handle_F_line(char buf[BUFSIZE], int pos, int conn)
+{
+    // buf ends with 5 digits for the port number + LF
+    int port = extract_port(buf, pos - 6);
+
+    // starts at pos 2 and ends 7 before the end
+    int filepath_len = pos - 2 - 7;
+
+    char filepath[filepath_len + 1];
+    memcpy(filepath, buf + 2, filepath_len);
+
+    // making it a valid C string
+    filepath[filepath_len + 1] = '\0';
+
+    printf("  => resolved filename from msg: %s\n", filepath);
+
+    int fd;
+
+    if ((fd = open(filepath, O_RDONLY)) < 0)
+    {
+        perror("open failed");
+        exit(EXIT_FAILURE);
+    }
+
+    struct stat statbuf;
+    int rc = fstat(fd, &statbuf);
+    if (rc < 0)
+    {
+        perror("fstat failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // convert size to string
+    char sizebuf[32];
+    snprintf(sizebuf, sizeof(sizebuf), "%ld", (long)statbuf.st_size);
+    put(conn, sizebuf);
+
+    send_file(port, fd);
+
+    // close file descriptor pointing to the file
+    close(fd);
+}
+
+int process_line(char buf[BUFSIZE], int *pos, int sock)
+{
     // debugging #320
     if (buf[0] != '#')
         printf("  => processing this line:\n");
@@ -61,7 +169,6 @@ int process_line(char buf[BUFSIZE], int *pos, int sock, char *filename)
     switch (toupper((unsigned char)buf[0]))
     {
     case 'E':
-
         // convert line to lowercase char-by-char
         for (int i = 0; i < *pos; i++)
             buf[i] = tolower((unsigned char)buf[i]);
@@ -79,11 +186,12 @@ int process_line(char buf[BUFSIZE], int *pos, int sock, char *filename)
         break;
 
     case 'C':
-        put(sock, filename);
+        put(sock, "tkt21026-extra.c");
         break;
 
-        // case 'F':
-        //     break;
+    case 'F':
+        handle_F_line(buf, *pos, sock);
+        break;
 
         // case 'A':
         //     break;
@@ -104,7 +212,7 @@ int process_line(char buf[BUFSIZE], int *pos, int sock, char *filename)
     return 0;
 }
 
-void serve_client(int sock, char *filename)
+void serve_client(int sock)
 {
     ssize_t n;
     char c;
@@ -118,7 +226,7 @@ void serve_client(int sock, char *filename)
         // are we getting empty lines??
         if (c == '\n' && pos > 1)
         {
-            if (process_line(buf, &pos, sock, filename))
+            if (process_line(buf, &pos, sock))
                 break;
         }
     }
@@ -133,7 +241,7 @@ void serve_client(int sock, char *filename)
     exit(0);
 }
 
-void server(int port, char *filename)
+void server(int port)
 {
     int fd_listen, fd_conn;
     struct sockaddr_in serv_addr;
@@ -173,7 +281,7 @@ void server(int port, char *filename)
         {
             // child proc of server serves the connected client
             close(fd_listen);
-            serve_client(fd_conn, filename);
+            serve_client(fd_conn);
         }
 
         close(fd_conn);
@@ -236,17 +344,11 @@ int main(int argc, char *argv[])
     get(sock, buf);
     get(sock, buf);
 
-    // retrieve PORT number from last message
+    // retrieve PORT number from the last message
     get(sock, buf);
+    int port = extract_port(buf, 55);
 
-    // extracting substring from pos 55..60 with '\0' at the end
-    char str_port[6];
-    memcpy(str_port, buf + 55, 5);
-    str_port[5] = '\0';
-    int port = atoi(str_port);
-
-    printf("  => resolved port from msg: %d\n", port);
-    server(port, argv[0]);
+    server(port);
 
     // get leftover messages from server
     while (get(sock, buf))
