@@ -163,13 +163,13 @@ void handle_F_line(char buf[BUFSIZE], int pos, int conn)
     // starts at pos 2 and ends 7 before the end
     int filepath_len = pos - 2 - 7;
 
-    char filepath[filepath_len + 1];
+    char filepath[filepath_len];
     memcpy(filepath, buf + 2, filepath_len);
 
     // making it a valid C string
-    filepath[filepath_len + 1] = '\0';
+    filepath[filepath_len] = '\0';
 
-    printf("  => resolved filename from msg: %s\n", filepath);
+    printf("  => resolved filename from msg: '%s'\n", filepath);
 
     int fd;
 
