@@ -19,6 +19,9 @@
 const char *HOSTNAME = "dx6-cs-02.pc.helsinki.fi";
 const char *SERVICE_NAME = "UNIX_TL";
 
+// setting this in beginning of main, everything else only reads it
+int verbose = 0;
+
 /**
  * connect to the remote server,
  * returns the created socket
@@ -70,7 +73,8 @@ int conn_remote(uint16_t port)
         exit(EXIT_FAILURE);
     }
 
-    printf("  => connected to server %s:%d\n", HOSTNAME, ntohs(port));
+    if (verbose > 0)
+        printf("  => connected to server %s:%d\n", HOSTNAME, ntohs(port));
 
     freeaddrinfo(res);
 
@@ -95,7 +99,7 @@ void put(int sock, char *msg)
     }
 
     // debugging the LF issue above
-    printf("  => sent %ld bytes (%s)\n", m, msg);
+    printf("  => sent %ld bytes: '%s'\n", m, msg);
 }
 
 /**
@@ -129,15 +133,17 @@ int extract_port(char buf[BUFSIZE], int pos)
     {
         int distance_from_zero = buf[pos] - '0';
 
-        printf("  => port = %05d + ('%c' - '0' == %d) * %d\n",
-               port, buf[pos], distance_from_zero, decimal);
+        if (verbose > 1)
+            printf("  => port = %05d + ('%c' - '0' == %d) * %d\n",
+                   port, buf[pos], distance_from_zero, decimal);
 
         port += distance_from_zero * decimal;
         pos++;
     }
 
-    // I'm using the same pos var for moving my carriage, so must adjust here
-    printf("  => resolved port from buf at pos %d: %d\n", pos - 5, port);
+    if (verbose > 0)
+        // I'm using the same pos var for moving my carriage, so must adjust here
+        printf("  => resolved port from buf at pos %d: %d\n", pos - 5, port);
 
     return port;
 }
@@ -181,7 +187,8 @@ void handle_F_line(char buf[BUFSIZE], int pos, int conn)
     // making it a valid C string
     filepath[filepath_len] = '\0';
 
-    printf("  => resolved filename from msg: '%s'\n", filepath);
+    if (verbose > 0)
+        printf("  => resolved filename from msg: '%s'\n", filepath);
 
     int fd;
 
@@ -213,7 +220,7 @@ void handle_F_line(char buf[BUFSIZE], int pos, int conn)
 int process_line(char buf[BUFSIZE], int *pos, int sock)
 {
     // debugging #320
-    if (buf[0] != '#')
+    if (buf[0] != '#' && verbose > 0)
         printf("  => processing this line:\n");
 
     // show me the line in any case
@@ -227,9 +234,11 @@ int process_line(char buf[BUFSIZE], int *pos, int sock)
         for (int i = 0; i < *pos; i++)
             buf[i] = tolower((unsigned char)buf[i]);
 
-        // debugging
-        printf("  => sending back the below line:\n");
-        write(STDOUT_FILENO, buf, *pos);
+        if (verbose > 0)
+        {
+            printf("  => sending back the below line:\n");
+            write(STDOUT_FILENO, buf, *pos);
+        }
 
         if (write(sock, buf, *pos) != *pos)
         {
@@ -298,7 +307,9 @@ void serve_client(int sock)
     }
 
     close(sock);
-    printf("  => childproc %d exiting\n", getpid());
+
+    if (verbose > 0)
+        printf("  => childproc %d exiting\n", getpid());
 
     // exiting child process with my spec. exit code == 2 if accepted
     exit(accepted == 1 ? 2 : EXIT_SUCCESS);
@@ -379,11 +390,22 @@ void server(int port)
 
     // terminate my server
     close(fd_listen);
-    printf("  => stopped concurrent server\n");
+
+    if (verbose > 0)
+        printf("  => stopped concurrent server\n");
 }
 
 int main(int argc, char *argv[])
 {
+
+    // add more of these flags to increase verbosity
+    // (last minute quality-of-life enchancement)
+    for (int i = 0; i < argc; i++)
+    {
+        if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0)
+            verbose++;
+    }
+
     char buf[BUFSIZE];
     int sock = conn_remote(0);
 
@@ -400,6 +422,8 @@ int main(int argc, char *argv[])
     get(sock, buf);
     int port = extract_port(buf, 55);
 
+    get(sock, buf);
+
     server(port);
 
     // get leftover messages from server
@@ -407,8 +431,11 @@ int main(int argc, char *argv[])
     {
     };
 
+    // terminate my original connection, by this time I already got your FIN
     close(sock);
 
-    printf("  => fn main ends\n");
+    if (verbose > 0)
+        printf("  => fn main ends\n");
+
     return EXIT_SUCCESS;
 }
