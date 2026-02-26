@@ -336,10 +336,10 @@ int main(int argc, char *argv[])
     int sock = conn_remote(0);
 
     get(sock, buf);
-    put(sock, argv[1]);
+    put(sock, "hi");
 
     get(sock, buf);
-    put(sock, argv[2]);
+    put(sock, "tjtoth");
 
     get(sock, buf);
     get(sock, buf);
