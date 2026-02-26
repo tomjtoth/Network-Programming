@@ -14,6 +14,69 @@
 
 #define BUFSIZE 1024
 
+const char *HOSTNAME = "dx6-cs-02.pc.helsinki.fi";
+const char *SERVICE_NAME = "UNIX_TL";
+
+/**
+ * connect to the remote server,
+ * returns the created socket
+ */
+int conn_remote(int port)
+{
+    int sock;
+    struct addrinfo serv_addr, *res;
+    struct servent *unix_tl_entry;
+
+    memset(&serv_addr, 0, sizeof(serv_addr));
+    serv_addr.ai_family = AF_INET;
+    serv_addr.ai_socktype = SOCK_STREAM;
+
+    // resolve server name to IP addr and store it in result
+    if (getaddrinfo(HOSTNAME, NULL, &serv_addr, &res) != 0)
+    {
+        perror("getaddrinfo");
+        exit(EXIT_FAILURE);
+    }
+
+    // if port is not provided use the default
+    if (port == 0)
+    {
+        // get standard TCP port of UNIX_TL service
+        unix_tl_entry = getservbyname(SERVICE_NAME, "tcp");
+        if (unix_tl_entry == NULL)
+        {
+            fprintf(stderr, "getservbyname failed\n");
+            exit(EXIT_FAILURE);
+        }
+        ((struct sockaddr_in *)res->ai_addr)->sin_port = unix_tl_entry->s_port;
+    }
+    else
+    {
+        ((struct sockaddr_in *)res->ai_addr)->sin_port = htons(port);
+    }
+
+    // assign unix_tl_entry.s_port to res.ai_addr.sin_port
+
+    sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (sock < 0)
+    {
+        perror("socket");
+        exit(EXIT_FAILURE);
+    }
+
+    if (connect(sock, res->ai_addr, res->ai_addrlen) < 0)
+    {
+        perror("connect");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("  => connected to server %s:%d\n", HOSTNAME, port);
+
+    freeaddrinfo(res);
+
+    return sock;
+}
+
 void put(int sock, char *msg)
 {
     size_t n, m;
@@ -72,30 +135,9 @@ int extract_port(char buf[BUFSIZE], int pos)
 
 void send_file(int port, int fd)
 {
-    // get random socket
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0)
-    {
-        perror("creating socket failed");
-        exit(EXIT_FAILURE);
-    }
-
-    // create address:port of receiver
-    struct sockaddr_in serv_addr;
-    memset(&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    serv_addr.sin_port = htons(port);
-
-    // connect to receiver
-    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-    {
-        perror("faled to connect to server");
-        exit(EXIT_FAILURE);
-    }
-
     char buf[BUFSIZE];
     ssize_t n;
+    int sock = conn_remote(port);
 
     // BUFSIZE chunks from file
     while ((n = read(fd, buf, BUFSIZE)) > 0)
@@ -290,50 +332,8 @@ void server(int port)
 
 int main(int argc, char *argv[])
 {
-    int sock;
     char buf[BUFSIZE];
-
-    struct addrinfo serv_addr, *res;
-    struct servent *unix_tl_entry;
-
-    // get standard TCP port of UNIX_TL service
-    unix_tl_entry = getservbyname("UNIX_TL", "tcp");
-    if (unix_tl_entry == NULL)
-    {
-        fprintf(stderr, "getservbyname failed\n");
-        exit(EXIT_FAILURE);
-    }
-
-    memset(&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.ai_family = AF_INET;
-    serv_addr.ai_socktype = SOCK_STREAM;
-
-    // resolve server name to IP addr and store it in result
-    if (getaddrinfo("dx6-cs-02.pc.helsinki.fi", NULL, &serv_addr, &res) != 0)
-    {
-        perror("getaddrinfo");
-        exit(EXIT_FAILURE);
-    }
-
-    // assign unix_tl_entry.s_port to res.ai_addr.sin_port
-    ((struct sockaddr_in *)res->ai_addr)->sin_port = unix_tl_entry->s_port;
-
-    sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if (sock < 0)
-    {
-        perror("socket");
-        exit(EXIT_FAILURE);
-    }
-
-    if (connect(sock, res->ai_addr, res->ai_addrlen) < 0)
-    {
-        perror("connect");
-        exit(EXIT_FAILURE);
-    }
-
-    printf("connected to server\n");
-
-    freeaddrinfo(res);
+    int sock = conn_remote(0);
 
     get(sock, buf);
     put(sock, argv[1]);
