@@ -21,7 +21,7 @@ const char *SERVICE_NAME = "UNIX_TL";
  * connect to the remote server,
  * returns the created socket
  */
-int conn_remote(int port)
+int conn_remote(uint16_t port)
 {
     int sock;
     struct addrinfo serv_addr, *res;
@@ -48,12 +48,10 @@ int conn_remote(int port)
             fprintf(stderr, "getservbyname failed\n");
             exit(EXIT_FAILURE);
         }
-        ((struct sockaddr_in *)res->ai_addr)->sin_port = unix_tl_entry->s_port;
+        port = unix_tl_entry->s_port;
     }
-    else
-    {
-        ((struct sockaddr_in *)res->ai_addr)->sin_port = htons(port);
-    }
+
+    ((struct sockaddr_in *)res->ai_addr)->sin_port = port;
 
     // assign unix_tl_entry.s_port to res.ai_addr.sin_port
 
@@ -70,7 +68,7 @@ int conn_remote(int port)
         exit(EXIT_FAILURE);
     }
 
-    printf("  => connected to server %s:%d\n", HOSTNAME, port);
+    printf("  => connected to server %s:%d\n", HOSTNAME, ntohs(port));
 
     freeaddrinfo(res);
 
@@ -137,7 +135,7 @@ void send_file(int port, int fd)
 {
     char buf[BUFSIZE];
     ssize_t n;
-    int sock = conn_remote(port);
+    int sock = conn_remote(htons(port));
 
     // BUFSIZE chunks from file
     while ((n = read(fd, buf, BUFSIZE)) > 0)
